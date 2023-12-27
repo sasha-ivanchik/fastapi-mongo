@@ -1,0 +1,53 @@
+version: "3.9"
+services:
+
+  postgres:
+    container_name: postgres
+    image: postgres:14.2-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${AUTH_DB_PASS}
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_DB: ${AUTH_DB_NAME}
+      PGUSER: ${AUTH_DB_PGUSER}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./volumes/auth-database:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-h", "${AUTH_DB_HOST}" ]
+      interval: 1s
+      timeout: 1s
+      retries: 10
+    networks:
+      - net
+
+
+  auth:
+    build:
+      context: ./
+      dockerfile: ./authentication/Dockerfile
+    env_file:
+      - .env
+    container_name: auth
+    command: [ "/src/starter/app.sh" ]
+    ports:
+      - "8001:8001"
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./authentication/:/src/
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/auth" ]
+      interval: 1s
+      timeout: 2s
+      retries: 10
+    networks:
+      - net
+
+
+networks:
+  net:
+    driver: bridge
