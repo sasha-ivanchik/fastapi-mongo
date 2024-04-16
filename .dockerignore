@@ -1,3 +1,5 @@
 ./venv
 ./.vite
 ./volumes
+.vite
+./vite
