@@ -40,6 +40,7 @@ class UserSchemaUpdate(BaseModel):
 
 
 # ====================== token's models ==========================
-class Token(BaseModel):
+class TokenInfo(BaseModel):
     access_token: str
-    token_type: str
+    refresh_token: str
+    token_type: str = "Bearer"

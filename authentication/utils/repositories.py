@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 
 from pydantic import BaseModel
-from sqlalchemy import literal_column
+from sqlalchemy import literal_column, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from core.pydantic_models import UserSchemaUpdate
-from core.schemas import User
+from core.schemas import User, Token
 
 
 class AbstractRepository(ABC):
@@ -102,3 +102,39 @@ class UsersRepository(SQLAlchemyRepository):
             select(self.model).where(self.model.username == username),
         )
         return res.scalars().one()
+
+
+class TokenRepository(SQLAlchemyRepository):
+    model = Token
+
+    async def delete_token_by_user_id(self, user_id: int):
+        token_res = await self.session.execute(
+            select(self.model).where(self.model.user_id == user_id),
+        )
+        token = token_res.scalars().one()
+        await self.session.delete(token)
+
+    async def get_token_by_user_id(self, user_id: int):
+        token_res = await self.session.execute(
+            select(self.model).where(self.model.user_id == user_id),
+        )
+        return token_res.scalars().one()
+
+    async def count_token_by_user_id(self, user_id: int):
+        count = await self.session.execute(
+            select(
+                func.count("*").filter(self.model.user_id == user_id)
+            ),
+        )
+        return count.scalars().one()
+
+    async def update_hashed_token(
+            self,
+            user_id: int,
+            new_hashed_token: str,
+    ):
+        update_item = await self.get_token_by_user_id(user_id)
+        setattr(update_item, "hashed_token", new_hashed_token)
+
+        self.session.add(update_item)
+        return update_item

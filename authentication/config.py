@@ -15,6 +15,8 @@ class AuthJWT(BaseSettings):
     PUBLIC_KEY_PATH: Path = Path.cwd() / "certs" / "jwt-public.pem"
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_SEC: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int
+
 
 
 class Settings(BaseSettings):

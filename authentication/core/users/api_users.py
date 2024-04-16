@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-# from app.utils.response_utils import user_response
 from fastapi import APIRouter, Response, status
 
 from core.pydantic_models import UserSchema, UserSchemaCreate, UserSchemaUpdate
@@ -8,14 +7,6 @@ from core.users.services import UsersService
 from utils.dependencies import uow_dependency
 
 router = APIRouter(prefix="/users", tags=["utils"])
-
-
-# @router.get("/me", response_model=UserSchema)
-# async def get_current_user_route(
-#     current_user: current_user_dependency,
-# ) -> UserSchema:
-#     """endpoint for getting current user"""
-#     return user_response(current_user)
 
 
 @router.get("/{user_id}", response_model=UserSchema)

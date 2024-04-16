@@ -11,10 +11,15 @@ def encode_jwt(
         payload: dict,
         private_key: str = settings.AUTH_JWT.PRIVATE_KEY_PATH.read_text(),
         algorithm: str = settings.AUTH_JWT.ALGORITHM,
-        expire_timedelta_sec: int = settings.AUTH_JWT.ACCESS_TOKEN_EXPIRE_SEC,
+        expire_timedelta_sec: int | None = settings.AUTH_JWT.ACCESS_TOKEN_EXPIRE_SEC,
+        expire_timedelta_days: int | None = None,
 ):
     to_encode = payload.copy()
-    expire = datetime.datetime.utcnow() + timedelta(seconds=expire_timedelta_sec)
+    expire = (
+        datetime.datetime.utcnow() + timedelta(seconds=expire_timedelta_sec)
+        if expire_timedelta_sec
+        else datetime.datetime.utcnow() + timedelta(days=expire_timedelta_days)
+    )
     to_encode.update({"exp": expire})
 
     encoded_jwt = jwt.encode(

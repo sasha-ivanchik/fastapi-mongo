@@ -14,19 +14,19 @@ class UsersService:
 
     @staticmethod
     async def create(
-        uow: ProtocolUnitOfWork,
-        some_user: UserSchemaCreate,
+            uow: ProtocolUnitOfWork,
+            some_user: UserSchemaCreate,
     ) -> UserSchema:
         """creates new user"""
         async with uow:
+
+            new_user_dict = some_user.model_dump()
+            del new_user_dict["password"]
+
+            new_user_dict["hashed_password"] = Hasher.get_password_hash(
+                some_user.password
+            )
             try:
-                new_user_dict = some_user.model_dump()
-                del new_user_dict["password"]
-
-                new_user_dict["hashed_password"] = Hasher.get_password_hash(
-                    some_user.password
-                )
-
                 new_user = await uow.users_repo.create(new_user_dict)
                 await uow.commit()
                 return new_user
@@ -40,7 +40,7 @@ class UsersService:
             except SQLAlchemyError:
                 raise SuperAuthException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail=f"Problem with creating user. Check data and Retry.",
+                    detail=f"Problem with creating user. Check the data and Retry.",
                 )
 
     @staticmethod
@@ -74,6 +74,24 @@ class UsersService:
                 )
 
     @staticmethod
+    async def get_user_by_username(uow: ProtocolUnitOfWork, username: str) -> UserSchema:
+        """gets user by username"""
+        async with uow:
+            try:
+                return await uow.users_repo.get_user_by_username(username)
+
+            except NoResultFound:
+                raise SuperAuthException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Not found.",
+                )
+            except SQLAlchemyError:
+                raise SuperAuthException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail=f"Problem with getting user. Check data and Retry.",
+                )
+
+    @staticmethod
     async def delete(uow: ProtocolUnitOfWork, user_id: int) -> None:
         """deletes user by id"""
         async with uow:
@@ -94,9 +112,9 @@ class UsersService:
 
     @staticmethod
     async def update(
-        uow: ProtocolUnitOfWork,
-        incoming_user_id: int,
-        incoming_user_data: UserSchemaUpdate,
+            uow: ProtocolUnitOfWork,
+            incoming_user_id: int,
+            incoming_user_data: UserSchemaUpdate,
     ) -> UserSchema:
         """updates user by id"""
         async with uow:

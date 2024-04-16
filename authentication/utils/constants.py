@@ -1,0 +1,3 @@
+TOKEN_TYPE_FIELD = "kind"
+ACCESS_TOKEN_TYPE = "access"
+REFRESH_TOKEN_TYPE = "refresh"

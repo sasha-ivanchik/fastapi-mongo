@@ -11,7 +11,9 @@ from utils.dependencies import (
     get_user_by_token_dependency,
     get_todo_service_dependency,
 )
-from utils.response_prep import prep_api_response
+from utils.response_prep import (
+    prep_api_response,
+)
 
 router = APIRouter(prefix="/api")
 
@@ -32,7 +34,7 @@ async def create_todo(
     # insert data
     new_todo = await todo_service.create_document(user, todo)
 
-    # remove cache for particular user in background
+    # remove cache for particular user
     celery_delete_cached_key.delay(
         cache_key=f"{user.username}_todos",
     )
@@ -44,12 +46,12 @@ async def get_all_todos(
         user: get_user_by_token_dependency,
         todo_service: get_todo_service_dependency,
         redis_client: redis_dependency,
-):
+) -> ApiResponse:
     user_todos = f"{user.username}_todos"
 
     # check cache
     if (cached_todos := await redis_client.get(user_todos)) is not None:
-        cached_todos = json.loads(cached_todos)
+        cached_todos = (json.loads(cached_todos))
         return prep_api_response(cached_todos, cached=True, user=user)
 
     # if no cache
@@ -57,7 +59,7 @@ async def get_all_todos(
 
     celery_set_cache.delay(
         cache_key=user_todos,
-        payload=json.dumps([todo.model_dump() for todo in todos]),
+        payload=json.dumps(str(todos)),
         expire=global_settings.cache_time_sec,
     )
     return prep_api_response(todos, user=user)
@@ -83,6 +85,7 @@ async def get_todo_by_title(
         user=user,
         title=title,
     )
+
     celery_set_cache.delay(
         cache_key=todo_key,
         payload=json.dumps(todo),

@@ -1,11 +1,15 @@
 from abc import ABC, abstractmethod
 
 from core.connection import async_session_maker
-from utils.repositories import UsersRepository
+from utils.repositories import (
+    UsersRepository,
+    TokenRepository,
+)
 
 
 class ProtocolUnitOfWork(ABC):
     users_repo: UsersRepository
+    token_repo: TokenRepository
 
     @abstractmethod
     def __init__(self):
@@ -36,6 +40,7 @@ class UnitOfWork(ProtocolUnitOfWork):
     async def __aenter__(self):
         self.session = self.session_maker()
         self.users_repo = UsersRepository(self.session)
+        self.token_repo = TokenRepository(self.session)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if exc_type:

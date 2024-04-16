@@ -1,8 +1,17 @@
+import datetime
+import time
+
 from fastapi import status, Request, Header
 import httpx
 
 from utils.exceptions import SuperApiException
-from .models import Todo, Token, User, TodoUpdate
+from .models import (
+    Todo,
+    TodoCreate,
+    Token,
+    User,
+    TodoUpdate,
+)
 from config import settings
 from .repository import Repository, MongoRepository
 
@@ -17,9 +26,16 @@ class TodoService:
             self,
             user: User,
     ) -> list[Todo]:
+        """returns all documents by username field"""
+
         document_filter = {"username": user.username}
         db_query = await self.repository.get_list(document_filter)
-        todos = [Todo(**document) async for document in db_query] if db_query else []
+
+        todos = (
+            [document async for document in db_query]
+            if db_query
+            else []
+        )
         return todos
 
     async def retrieve_document(
@@ -27,9 +43,12 @@ class TodoService:
             user: User,
             title: str,
     ) -> Todo:
+        """returns unique document by username and title fields"""
+
         document_filter = {"title": title, "username": user.username}
+
         if document := await self.repository.get(document_filter):
-            return document
+            return Todo.model_validate(document)
         else:
             raise SuperApiException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -39,29 +58,40 @@ class TodoService:
     async def create_document(
             self,
             user: User,
-            document: Todo,
+            incoming_todo: TodoCreate,
     ) -> Todo:
+        """creates new todo_document in DB and returns it"""
+
         try:
             if await self.repository.get(
-                    {"title": document.title, "username": user.username}
+                    {"title": incoming_todo.title, "username": user.username}
             ):
                 raise SuperApiException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="Already exist",
                 )
 
-            new_doc_dict = document.model_dump()
-            new_doc_dict.update({"username": user.username})
+            new_todo = Todo(
+                created_at=time.time(),
+                username=user.username,
+                title=incoming_todo.title,
+                description=incoming_todo.description,
+                additional_info=incoming_todo.additional_info,
+                is_done=incoming_todo.is_done,
+                public=incoming_todo.public,
+            )
+            new_todo_in_db = await self.repository.create(new_todo.model_dump())
 
-            return await self.repository.create(new_doc_dict)
+            return Todo.model_validate(new_todo_in_db)
 
         except SuperApiException:
             raise
 
-        except Exception:
+        except Exception as e:
             raise SuperApiException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Something went wrong. Retry.",
+                # detail="Something went wrong. Retry.",
+                detail=str(e),
             )
 
     async def update_document(
@@ -69,13 +99,15 @@ class TodoService:
             user: User,
             update_todo: TodoUpdate,
     ) -> Todo:
+        """updates todo_document in DB and returns it"""
+
         doc_filter = {"title": update_todo.title, "username": user.username}
         doc_setter = update_todo.model_dump(exclude_none=True)
         del doc_setter["title"]
 
         document = await self.repository.update(doc_filter, doc_setter)
         if document:
-            return document
+            return Todo.model_validate(document)
 
         raise SuperApiException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -87,6 +119,8 @@ class TodoService:
             user: User,
             title: str,
     ) -> bool:
+        """deletes todo_document from DB"""
+
         doc_filter = {"title": title, "username": user.username}
         await self.repository.delete(doc_filter)
         return True
@@ -153,8 +187,8 @@ class AuthUserService:
             response = response.json()
             if not response.get("access_token"):
                 raise SuperApiException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Retry.",
+                    status_code=status.HTTP_418_IM_A_TEAPOT,
+                    detail="Check your data and retry.",
                 )
         return response
 

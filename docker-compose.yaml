@@ -1,5 +1,7 @@
 version: "3.9"
 services:
+
+
   app:
     build:
       context: ./
@@ -12,22 +14,23 @@ services:
       - "8000:8000"
     restart: on-failure
     depends_on:
-      mongodb:
+      auth:
+        condition: service_healthy
+      mongo:
         condition: service_healthy
       redis:
         condition: service_healthy
       postgres:
-        condition: service_healthy
-      auth:
         condition: service_healthy
     volumes:
       - ./backend/:/src/
     networks:
       - net
 
-  mongodb:
+
+  mongo:
     image: mongo:latest
-    container_name: mongodb
+    container_name: mongo
     env_file:
       - .env
     ports:
@@ -48,6 +51,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+
 
   redis:
     image: redis:alpine
@@ -71,6 +75,7 @@ services:
       timeout: 2s
       retries: 10
 
+
   celery:
     container_name: celery
     build:
@@ -84,6 +89,7 @@ services:
       - redis
     networks:
       - net
+
 
   flower:
     container_name: flower

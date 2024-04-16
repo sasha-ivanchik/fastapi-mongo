@@ -17,7 +17,7 @@ class User(Base):
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     username: so.Mapped[str] = so.mapped_column(
-        sa.String(64), unique=True, nullable=False
+        sa.String(200), unique=True, nullable=False
     )
     email: so.Mapped[str] = so.mapped_column(sa.String(64), unique=True, nullable=False)
     hashed_password: so.Mapped[str] = so.mapped_column(sa.String(64), nullable=False)
@@ -36,6 +36,7 @@ class Token(Base):
         sa.Integer,
         sa.ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
+        unique=True,
     )
     hashed_token: so.Mapped[str] = so.mapped_column(sa.String(300), nullable=False)
 

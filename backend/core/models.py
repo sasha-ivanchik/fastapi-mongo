@@ -1,4 +1,5 @@
 from typing import Union, Any
+from datetime import datetime, timezone
 
 from pydantic import BaseModel, model_validator
 from fastapi import status
@@ -10,6 +11,8 @@ class TodoBase(BaseModel):
     title: str
     description: str
     additional_info: dict | str | None = None
+    is_done: bool = False
+    public: bool = True
 
 
 class TodoCreate(TodoBase):
@@ -19,6 +22,8 @@ class TodoCreate(TodoBase):
 class TodoUpdate(TodoBase):
     description: str | None
     additional_info: dict | str | None = None
+    public: bool | None = None
+    is_done: bool | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -32,13 +37,14 @@ class TodoUpdate(TodoBase):
             if not data.get("description") and not (data.get("additional_info")):
                 raise SuperApiException(
                     status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                    detail="A `description` or `additional_info` must be provided.",
+                    # detail="`description` or `additional_info` must be provided.",
+                    detail="A `description` must be provided.",
                 )
         return data
 
 
 class Todo(TodoBase):
-    username: str
+    created_at: float | datetime
 
 
 class User(BaseModel):
@@ -48,7 +54,7 @@ class User(BaseModel):
 
 
 class ApiResponse(BaseModel):
-    result: Union[list[TodoBase], TodoBase]
+    result: Union[list[Todo], Todo]
     cached: bool = False
     user: User
 
