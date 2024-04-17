@@ -1,5 +1,5 @@
 from typing import Union, Any
-from datetime import datetime, timezone
+from datetime import datetime
 
 from pydantic import BaseModel, model_validator
 from fastapi import status
@@ -43,8 +43,12 @@ class TodoUpdate(TodoBase):
         return data
 
 
-class Todo(TodoBase):
+class TodoOut(TodoBase):
     created_at: float | datetime
+
+
+class Todo(TodoOut):
+    username: str
 
 
 class User(BaseModel):
@@ -54,11 +58,12 @@ class User(BaseModel):
 
 
 class ApiResponse(BaseModel):
-    result: Union[list[Todo], Todo]
+    result: Union[list[TodoOut], TodoOut]
     cached: bool = False
     user: User
 
 
-class Token(BaseModel):
+class TokenInfo(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str

@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     LOGIN_URL: str
     SIGNUP_URL: str
     CHECK_TOKEN_URL: str
+    REFRESH_TOKENS_URL: str
 
 
 settings = Settings()

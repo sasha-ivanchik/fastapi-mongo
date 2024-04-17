@@ -1,7 +1,6 @@
-import json
 import datetime
 
-from core.models import Todo, ApiResponse, User, TodoBase
+from core.models import Todo, ApiResponse, User, TodoOut
 
 
 def prep_api_response(
@@ -11,15 +10,15 @@ def prep_api_response(
 ) -> ApiResponse:
     response_data = eval(response_data) if cached else response_data
     result = (
-        Todo.model_validate(response_data)
+        TodoOut.model_validate(response_data)
         if not isinstance(response_data, list)
-        else [Todo.model_validate(element) for element in response_data]
+        else [TodoOut.model_validate(element) for element in response_data]
     )
     result = get_datetime_from_epoch(result)
     return ApiResponse(result=result, cached=cached, user=user)
 
 
-def convert_epoch_to_datetime(todo: Todo) -> Todo:
+def convert_epoch_to_datetime(todo: TodoOut) -> TodoOut:
     created_at_datetime = (
             datetime.datetime(1970, 1, 1)
             + datetime.timedelta(seconds=todo.created_at)
@@ -28,7 +27,7 @@ def convert_epoch_to_datetime(todo: Todo) -> Todo:
     return todo
 
 
-def get_datetime_from_epoch(data: Todo | list[Todo]):
+def get_datetime_from_epoch(data: TodoOut | list[TodoOut]):
     if isinstance(data, Todo):
         return convert_epoch_to_datetime(data)
     else:

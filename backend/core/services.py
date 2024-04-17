@@ -1,4 +1,3 @@
-import datetime
 import time
 
 from fastapi import status, Request, Header
@@ -8,7 +7,7 @@ from utils.exceptions import SuperApiException
 from .models import (
     Todo,
     TodoCreate,
-    Token,
+    TokenInfo,
     User,
     TodoUpdate,
 )
@@ -136,7 +135,7 @@ class AuthUserService:
             username: str,
             password: str,
             request: Request,
-    ) -> Token:
+    ) -> TokenInfo:
         data = {
             "username": username,
             "password": password,
@@ -167,7 +166,7 @@ class AuthUserService:
             email: str,
             password: str,
             username: str,
-    ) -> Token:
+    ) -> TokenInfo:
         data = {
             "username": username,
             "password": password,
@@ -193,9 +192,9 @@ class AuthUserService:
         return response
 
     @staticmethod
-    async def check_token(request: Request, token: str = Header(...)) -> User:
+    async def check_access_token(request: Request, token: str = Header(...)) -> User:
         headers = request.headers.mutablecopy()
-        headers["Authorization"] = f"Bearer {token}"
+        headers["auth"] = f"{token}"
         headers["accept"] = "application/json"
         del headers["Content-Length"]
 
@@ -208,6 +207,26 @@ class AuthUserService:
             if not response.get("username"):
                 raise SuperApiException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Wrong username or password",
+                    detail="Invalid token",
                 )
         return User(**response)
+
+    @staticmethod
+    async def refresh_tokens(request: Request, refresh_token: str = Header(...)) -> TokenInfo:
+        headers = request.headers.mutablecopy()
+        headers["refresh"] = f"{refresh_token}"
+        headers["accept"] = "application/json"
+        del headers["Content-Length"]
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                settings.REFRESH_TOKENS_URL,
+                headers=headers,
+            )
+            response = response.json()
+            if not response.get("access_token"):
+                raise SuperApiException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Invalid token: {response}",
+                )
+        return response

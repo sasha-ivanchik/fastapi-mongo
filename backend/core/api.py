@@ -4,12 +4,13 @@ from fastapi import APIRouter, status, Form, Request
 
 from utils.celery_worker import celery_set_cache, celery_delete_cached_key
 from config import settings as global_settings
-from core.models import ApiResponse, Token, TodoCreate, TodoUpdate
+from core.models import ApiResponse, TokenInfo, TodoCreate, TodoUpdate
 from core.services import AuthUserService
 from utils.dependencies import (
     redis_dependency,
     get_user_by_token_dependency,
     get_todo_service_dependency,
+    refresh_tokens_dependency,
 )
 from utils.response_prep import (
     prep_api_response,
@@ -134,12 +135,12 @@ async def delete_todo_by_id(
     return response
 
 
-@router.post("/login", response_model=Token, tags=["auth"])
+@router.post("/login", response_model=TokenInfo, tags=["auth"])
 async def proxy_to_login(
         request: Request,
         username: str = Form(),
         password: str = Form(),
-) -> Token:
+) -> TokenInfo:
     return await AuthUserService.login_user(
         username=username,
         password=password,
@@ -167,3 +168,10 @@ async def proxy_to_check(
         user: get_user_by_token_dependency,
 ):
     return user
+
+
+@router.get("/refresh", tags=["auth"])
+async def proxy_to_refresh(
+        token_info: refresh_tokens_dependency,
+) -> TokenInfo:
+    return token_info
