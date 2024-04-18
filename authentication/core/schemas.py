@@ -38,6 +38,6 @@ class Token(Base):
         nullable=False,
         unique=True,
     )
-    hashed_token: so.Mapped[str] = so.mapped_column(sa.String(300), nullable=False)
+    hashed_token: so.Mapped[str] = so.mapped_column(sa.String(1000), nullable=False)
 
     user: so.Mapped["User"] = relationship(back_populates="hashed_token")

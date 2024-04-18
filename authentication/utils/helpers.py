@@ -11,17 +11,16 @@ from starlette import status
 
 from core.users.services import UsersService
 from core.connection import async_session_maker
-from core.pydantic_models import UserSchema, Role
+from core.pydantic_models import UserSchema
 from core.schemas import User
 from utils.exceptions import SuperAuthException
 from utils.hashing import Hasher
-from utils.security import decode_jwt, encode_jwt
+from utils.security import decode_jwt
 from utils.constants import (
     TOKEN_TYPE_FIELD,
     ACCESS_TOKEN_TYPE,
     REFRESH_TOKEN_TYPE
 )
-from config import settings
 from utils.unit_of_work import UnitOfWork, ProtocolUnitOfWork
 
 
@@ -83,7 +82,7 @@ async def get_access_token_payload(
 
 
 async def get_refresh_token_payload(
-        refresh: str | None = Header(None),
+        refresh: str | None,
 ) -> dict:
     """get payload from refresh token"""
     return await fetch_token_data(refresh)
@@ -132,53 +131,47 @@ async def get_user_by_access_token(
     )
 
 
+async def validate_refresh_jwt(
+        uow: ProtocolUnitOfWork,
+        refresh_token: str,
+        user_from_token: UserSchema,
+):
+    validate_exception = SuperAuthException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=f"Invalid token (user not found)",
+    )
+    try:
+        token_in_db = await uow.token_repo.get_token_by_user_id(
+            user_id=user_from_token.id,
+        )
+
+        if Hasher.decrypt(token_in_db.hashed_token) != refresh_token:
+            raise SuperAuthException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Invalid token. Checked with encryption.",
+            )
+    except SQLAlchemyError:
+        raise validate_exception
+
+
 async def get_user_by_refresh_token(
-        token_payload: dict = Depends(get_refresh_token_payload),
+        refresh_token: str | None = Header(None),
         uow: ProtocolUnitOfWork = Depends(UnitOfWork),
 ) -> UserSchema:
     """get user by refresh token"""
-    return await fetch_user_by_token(
+    token_payload = await get_refresh_token_payload(refresh=refresh_token)
+
+    user_from_token = await fetch_user_by_token(
         uow=uow,
         sub_field="sub",
         token_payload=token_payload,
         token_type=REFRESH_TOKEN_TYPE,
     )
 
-
-def create_jwt(
-        token_type: str,
-        token_payload: dict,
-        expire_timedelta_sec: int | None = settings.AUTH_JWT.ACCESS_TOKEN_EXPIRE_SEC,
-        expire_timedelta_days: int | None = None,
-) -> str:
-    jwt_payload = {TOKEN_TYPE_FIELD: token_type}
-    jwt_payload.update(token_payload)
-    return encode_jwt(
-        payload=jwt_payload,
-        expire_timedelta_sec=expire_timedelta_sec,
-        expire_timedelta_days=expire_timedelta_days,
+    await validate_refresh_jwt(
+        uow=uow,
+        refresh_token=refresh_token,
+        user_from_token=user_from_token
     )
 
-
-def create_access_token(user: UserSchema) -> str:
-    jwt_payload = {
-        "username": user.username,
-        "email": user.email,
-        "role": user.role.value if isinstance(user.role, Role) else user.role,
-    }
-    return create_jwt(
-        token_type=ACCESS_TOKEN_TYPE,
-        token_payload=jwt_payload,
-        expire_timedelta_sec=settings.AUTH_JWT.ACCESS_TOKEN_EXPIRE_SEC,
-    )
-
-
-def create_refresh_token(user: UserSchema) -> str:
-    jwt_payload = {
-        "sub": user.username,
-    }
-    return create_jwt(
-        token_type=REFRESH_TOKEN_TYPE,
-        token_payload=jwt_payload,
-        expire_timedelta_days=settings.AUTH_JWT.REFRESH_TOKEN_EXPIRE_DAYS,
-    )
+    return user_from_token

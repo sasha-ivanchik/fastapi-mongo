@@ -138,3 +138,6 @@ class TokenRepository(SQLAlchemyRepository):
 
         self.session.add(update_item)
         return update_item
+
+    async def get_token_by_hash(self, incoming_hashed_token: str):
+        ...

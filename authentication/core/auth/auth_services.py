@@ -8,7 +8,7 @@ from core.users.services import UsersService
 from utils.exceptions import SuperAuthException
 from utils.hashing import Hasher
 from utils.unit_of_work import ProtocolUnitOfWork
-from utils.helpers import create_access_token, create_refresh_token
+from utils.token_processor import create_access_token, create_refresh_token
 
 
 class AuthService:
@@ -50,9 +50,7 @@ class AuthService:
         """puts refresh token in db"""
         async with uow:
             new_token_dict = {"user_id": some_user.id}
-            new_token_dict["hashed_token"] = Hasher.get_password_hash(
-                refresh_token
-            )
+            new_token_dict["hashed_token"] = Hasher.encrypt(refresh_token)
             try:
                 token_count = await uow.token_repo.count_token_by_user_id(some_user.id)
                 if not token_count:

@@ -16,7 +16,8 @@ class AuthJWT(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_SEC: int
     REFRESH_TOKEN_EXPIRE_DAYS: int
-
+    TOKEN_ENCRYPTION_SECRET: str
+    TOKEN_ENCRYPTION_SALT: str
 
 
 class Settings(BaseSettings):
