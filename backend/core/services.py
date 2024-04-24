@@ -1,3 +1,4 @@
+import json
 import time
 
 from fastapi import status, Request, Header
@@ -96,13 +97,13 @@ class TodoService:
     async def update_document(
             self,
             user: User,
+            title: str,
             update_todo: TodoUpdate,
     ) -> Todo:
         """updates todo_document in DB and returns it"""
 
-        doc_filter = {"title": update_todo.title, "username": user.username}
+        doc_filter = {"title": title, "username": user.username}
         doc_setter = update_todo.model_dump(exclude_none=True)
-        del doc_setter["title"]
 
         document = await self.repository.update(doc_filter, doc_setter)
         if document:
@@ -142,8 +143,8 @@ class AuthUserService:
         }
 
         headers = request.headers.mutablecopy()
+        del headers["Content-Length"]
         headers["Content-Type"] = "application/x-www-form-urlencoded"
-        headers["accept"] = "application/json"
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -152,7 +153,6 @@ class AuthUserService:
                 data=data,
             )
             response = response.json()
-
         if not response.get("access_token"):
             raise SuperApiException(
                 status_code=status.HTTP_403_FORBIDDEN,

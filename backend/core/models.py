@@ -10,7 +10,10 @@ from utils.exceptions import SuperApiException
 class TodoBase(BaseModel):
     title: str
     description: str
-    additional_info: dict | str | None = None
+    additional_info: dict[
+                         str,
+                         Union[str, int, float]
+                     ] | str | None = None
     is_done: bool = False
     public: bool = True
 
@@ -18,16 +21,9 @@ class TodoBase(BaseModel):
 class TodoCreate(TodoBase):
     ...
 
-
-class TodoUpdate(TodoBase):
-    description: str | None
-    additional_info: dict | str | None = None
-    public: bool | None = None
-    is_done: bool | None = None
-
     @model_validator(mode="before")
     @classmethod
-    def check_card_number_omitted(cls, data: Any) -> Any:
+    def check_if_title_and_desc_exist(cls, data: Any) -> Any:
         if isinstance(data, dict):
             if not data.get("title"):
                 raise SuperApiException(
@@ -37,10 +33,19 @@ class TodoUpdate(TodoBase):
             if not data.get("description") and not (data.get("additional_info")):
                 raise SuperApiException(
                     status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                    # detail="`description` or `additional_info` must be provided.",
                     detail="A `description` must be provided.",
                 )
         return data
+
+
+class TodoUpdate(BaseModel):
+    description: str | None = None
+    additional_info: dict[
+                         str,
+                         Union[str, int, float]
+                     ] | str | None = None
+    public: bool | None = None
+    is_done: bool | None = None
 
 
 class TodoOut(TodoBase):

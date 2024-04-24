@@ -66,7 +66,7 @@ async def get_all_todos(
     return prep_api_response(todos, user=user)
 
 
-@router.get("/todo{title}", response_model=ApiResponse)
+@router.get("/todo/{title}", response_model=ApiResponse)
 async def get_todo_by_title(
         title: str,
         user: get_user_by_token_dependency,
@@ -89,22 +89,24 @@ async def get_todo_by_title(
 
     celery_set_cache.delay(
         cache_key=todo_key,
-        payload=json.dumps(todo),
+        payload=json.dumps(todo.model_dump()),
         expire=global_settings.cache_time_sec,
     )
 
     return prep_api_response(todo, user=user)
 
 
-@router.put("/todo{title}", response_model=ApiResponse)
-@router.patch("/todo{title}", response_model=ApiResponse)
+@router.put("/todo/{title}", response_model=ApiResponse)
+@router.patch("/todo/{title}", response_model=ApiResponse)
 async def update_todo_by_id(
+        title: str,
         update_todo: TodoUpdate,
         todo_service: get_todo_service_dependency,
         user: get_user_by_token_dependency,
 ) -> ApiResponse:
     response = await todo_service.update_document(
         user=user,
+        title=title,
         update_todo=update_todo,
     )
 
@@ -113,12 +115,12 @@ async def update_todo_by_id(
         cache_key=f"{user.username}_todos",
     )
     celery_delete_cached_key.delay(
-        cache_key=f"{user.username}_{update_todo.title}",
+        cache_key=f"{user.username}_{title}",
     )
     return prep_api_response(response, user=user)
 
 
-@router.delete("/todo{title}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/todo/{title}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_todo_by_id(
         title: str,
         todo_service: get_todo_service_dependency,
