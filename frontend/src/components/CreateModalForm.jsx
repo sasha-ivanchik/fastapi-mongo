@@ -3,7 +3,7 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 
-function PopupCreateForm(props) {
+function ModalCreateForm(props) {
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -115,4 +115,4 @@ function PopupCreateForm(props) {
     );
 }
 
-export default PopupCreateForm;
+export default ModalCreateForm;

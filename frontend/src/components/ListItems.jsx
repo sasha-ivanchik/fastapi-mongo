@@ -12,7 +12,7 @@ import {
     fetchToken
     } from './Auth.jsx'
 import SimpleCard from './Item.jsx'
-import PopupCreateForm from './CreatePopupForm.jsx'
+import ModalCreateForm from './CreateModalForm.jsx'
 
 
 function ListItems () {
@@ -168,7 +168,7 @@ function ListItems () {
                     >
                         + Create TODO
                     </Button>
-                    <PopupCreateForm
+                    <ModalCreateForm
                         show={modalShow}
                         onHide={() => setModalShow(false)}
                         onCreate={ handleCreateItem }

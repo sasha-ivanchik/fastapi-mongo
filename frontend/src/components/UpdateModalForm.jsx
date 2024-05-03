@@ -3,7 +3,7 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 
-function PopupUpdateForm(props) {
+function ModalUpdateForm(props) {
 
     const [description, setDescription] = useState(props.currentTodo.description);
     const [additionalInfo, setAdditionalInfo] = useState(props.currentTodo.additional_info);
@@ -105,4 +105,4 @@ function PopupUpdateForm(props) {
     );
 }
 
-export default PopupUpdateForm;
+export default ModalUpdateForm;

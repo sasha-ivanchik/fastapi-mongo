@@ -3,7 +3,7 @@ import Card from 'react-bootstrap/Card';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
-import PopupUpdateForm from './UpdatePopupForm.jsx'
+import ModalUpdateForm from './UpdateModalForm.jsx'
 
 
 function SimpleCard({todo, onDelete, onDoneSwap, onUpdate}) {
@@ -78,7 +78,7 @@ function SimpleCard({todo, onDelete, onDoneSwap, onUpdate}) {
                         Update
                     </Button>
 
-                    <PopupUpdateForm
+                    <ModalUpdateForm
                         show={modalShow}
                         onHide={() => setModalShow(false)}
                         currentTodo={todo}

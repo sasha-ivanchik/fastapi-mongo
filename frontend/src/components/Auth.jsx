@@ -1,10 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 
 import {
-    getUser
-    } from './GetData.jsx'
-
-import {
     ACCESS_TOKEN_FIELD,
     REFRESH_TOKEN_FIELD,
     } from './Constants.jsx'
@@ -13,10 +9,6 @@ import {
 export const setToken = ({token, tokenType, isToken}) => {
     // put token in localStorage
     localStorage.setItem(tokenType, token)
-    if (!isToken) {
-        getUser(token)
-    }
-
 }
 
 export const fetchToken = (tokenType) => {

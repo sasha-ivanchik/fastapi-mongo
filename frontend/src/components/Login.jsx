@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {useNavigate} from 'react-router-dom';
+import axios from 'axios';
+
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
-import axios from 'axios';
 
 import {
     setToken,
@@ -13,18 +14,62 @@ import {
     ACCESS_TOKEN_FIELD,
     REFRESH_TOKEN_FIELD,
     LOGIN_URL,
+    SIGNUP_URL,
     } from './Constants.jsx'
 import LoginAlert from './LoginAlert.jsx'
+import SignupForm from './SignupModalForm.jsx'
 
 
 export default function Login () {
 
-    const navigate = useNavigate();
+    const frontHeaders = {  'Content-Type': 'application/x-www-form-urlencoded',
+                            'accept': 'application/json'}
 
+    const navigate = useNavigate();
+    const [signupModalShow, setSignupModalShow] = React.useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleSubmit = () => {
+    const handleSignup = ({signupUsername, signupPassword, signupEmail}) => {
+        const form = new FormData();
+        form.append('username', signupUsername)
+        form.append('password', signupPassword)
+        form.append('email', signupEmail)
+
+        if (fetchToken(ACCESS_TOKEN_FIELD)) {
+            localStorage.clear();
+        };
+        axios.post(
+            `${SIGNUP_URL}`,
+            form,
+            { headers: frontHeaders}
+        )
+        .then(function (response) {
+            if(response.data.hasOwnProperty("access_token")){
+                setToken(
+                    {"token": response.data.access_token,
+                    "tokenType": ACCESS_TOKEN_FIELD,
+                    "isToken": true}
+                );
+
+                setToken(
+                    {"token": response.data.refresh_token,
+                    "tokenType": REFRESH_TOKEN_FIELD,
+                    "isToken": true},
+                );
+                navigate("/profile");
+            }
+            else{
+                alert("INVALID DATA. RETRY.")
+            }
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+
+    }
+
+    const handleLogin = () => {
         if(username.length === 0){
             alert("NO USERNAME")
         }
@@ -32,6 +77,9 @@ export default function Login () {
             alert("NO PASSWORD")
         }
         else{
+            if (fetchToken(ACCESS_TOKEN_FIELD)) {
+                localStorage.clear();
+            };
             const form = new FormData();
             form.append('username', username)
             form.append('password', password)
@@ -39,8 +87,7 @@ export default function Login () {
             axios.post(
                 LOGIN_URL,
                 form,
-                { headers: {    'Content-Type': 'application/x-www-form-urlencoded',
-                                'accept': 'application/json'} }
+                { headers: frontHeaders }
             )
             .then(function (response) {
                 if(response.data.hasOwnProperty("access_token")){
@@ -106,10 +153,22 @@ export default function Login () {
                     variant="outline-primary"
                     type="submit"
                     className="me-3"
-                    onClick={ (e) => { e.preventDefault(); handleSubmit() } }
+                    onClick={ (e) => { e.preventDefault(); handleLogin() } }
                 >
                     Log in
                 </Button>
+
+                <Button
+                    variant="outline-danger"
+                    onClick={() => setSignupModalShow(true)}
+                >
+                    + Create an account
+                </Button>
+                <SignupForm
+                    show={signupModalShow}
+                    onHide={() => setSignupModalShow(false)}
+                    onSignup={handleSignup}
+                />
             </Form>
         </Card.Body>
     </Card>

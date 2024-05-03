@@ -174,8 +174,8 @@ class AuthUserService:
         }
 
         headers = request.headers.mutablecopy()
+        del headers["Content-Length"]
         headers["Content-Type"] = "application/x-www-form-urlencoded"
-        headers["accept"] = "application/json"
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -187,7 +187,8 @@ class AuthUserService:
             if not response.get("access_token"):
                 raise SuperApiException(
                     status_code=status.HTTP_418_IM_A_TEAPOT,
-                    detail="Check your data and retry.",
+                    detail=f"{response}",
+                    # detail="Check your data and retry.",
                 )
         return response
 
