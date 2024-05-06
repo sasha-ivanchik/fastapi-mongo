@@ -1,3 +1,6 @@
+from typing import Union
+from dataclasses import dataclass
+
 from pydantic import BaseModel, Field, EmailStr
 from enum import Enum
 
@@ -44,3 +47,21 @@ class TokenInfo(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "Bearer"
+
+
+# ===================== comon response ==========================
+@dataclass
+class ResponseStatus(Enum):
+    success = "success"
+    error = "error"
+
+    def __repr__(self):
+        return self.value
+
+
+class AuthResponse(TunedModel):
+    status: ResponseStatus | str
+    message: str
+    data: Union[TokenInfo | UserBase | None]
+    error: str | None = None
+    code: int = 200

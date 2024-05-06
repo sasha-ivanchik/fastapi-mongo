@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from fastapi import status
 from pydantic import BaseModel
 from sqlalchemy import literal_column, func
 from sqlalchemy.dialects.postgresql import insert
@@ -8,6 +9,9 @@ from sqlalchemy.future import select
 
 from core.pydantic_models import UserSchemaUpdate
 from core.schemas import User, Token
+from utils.exceptions import SuperAuthException
+from utils.hashing import Hasher
+from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 
 
 class AbstractRepository(ABC):
@@ -102,6 +106,29 @@ class UsersRepository(SQLAlchemyRepository):
             select(self.model).where(self.model.username == username),
         )
         return res.scalars().one()
+
+    async def get_user_by_creds(self, username: str, password: str):
+        """get user by username and password"""
+        unauthenticated_error = SuperAuthException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+        )
+        try:
+            user = await self.session.execute(select(User).where(User.username == username))
+            user = user.scalars().one()
+
+            if not user or not Hasher.verify_password(password, user.hashed_password):
+                raise unauthenticated_error
+            return user
+
+        except NoResultFound:
+            raise unauthenticated_error
+
+        except SQLAlchemyError:
+            raise SuperAuthException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Bad request. Check your data and Retry.",
+            )
 
 
 class TokenRepository(SQLAlchemyRepository):

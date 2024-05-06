@@ -135,3 +135,28 @@ class UsersService:
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     detail=f"Problem with updating the user. Check data and Retry.",
                 )
+
+    @staticmethod
+    async def get_user_by_creds(
+            uow: ProtocolUnitOfWork,
+            username: str,
+            password: str,
+    ) -> UserSchema:
+        """get user by credentials aka username and password"""
+        async with uow:
+            try:
+                user = await uow.users_repo.get_user_by_creds(
+                    username=username, password=password
+                )
+                return user
+
+            except NoResultFound:
+                raise SuperAuthException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Not found.",
+                )
+            except SQLAlchemyError:
+                raise SuperAuthException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail=f"Problem with updating the user. Check data and Retry.",
+                )

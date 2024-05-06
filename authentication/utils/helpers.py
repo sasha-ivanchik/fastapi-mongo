@@ -1,18 +1,14 @@
 from jwt import InvalidTokenError, ExpiredSignatureError
 from fastapi import (
-    Form,
     Depends,
     Header,
 )
 
-from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from starlette import status
 
 from core.users.services import UsersService
-from core.connection import async_session_maker
 from core.pydantic_models import UserSchema
-from core.schemas import User
 from utils.exceptions import SuperAuthException
 from utils.hashing import Hasher
 from utils.security import decode_jwt
@@ -22,34 +18,6 @@ from utils.constants import (
     REFRESH_TOKEN_TYPE
 )
 from utils.unit_of_work import UnitOfWork, ProtocolUnitOfWork
-
-
-async def get_user_by_credentials(
-        username: str = Form(),
-        password: str = Form(),
-) -> User:
-    """get user by username and password"""
-    unauthenticated_error = SuperAuthException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Incorrect username or password",
-    )
-    try:
-        async with async_session_maker() as session:
-            user = await session.execute(select(User).where(User.username == username))
-            user = user.scalars().one()
-
-            if not user:
-                raise unauthenticated_error
-            if not Hasher.verify_password(password, user.hashed_password):
-                raise unauthenticated_error
-
-            return user
-
-    except SQLAlchemyError as e:
-        raise SuperAuthException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Problem with DB. Check data and Retry.\n{e}",
-        )
 
 
 async def fetch_token_data(token_header: str) -> dict:
@@ -65,7 +33,7 @@ async def fetch_token_data(token_header: str) -> dict:
     except ExpiredSignatureError:
         raise SuperAuthException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Token expired. Go to 'LOG IN'",
+            detail=f"Token expired. Go to 'LOG IN' or refresh",
         )
     except InvalidTokenError:
         raise SuperAuthException(
@@ -94,7 +62,7 @@ def check_token_type(token_payload: dict, expected_token_type: str) -> None:
     if token_type != expected_token_type:
         raise SuperAuthException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid token type {token_type!r} expected {expected_token_type!r}",
+            detail=f"Invalid token type.",
         )
 
 
@@ -148,7 +116,7 @@ async def validate_refresh_jwt(
         if Hasher.decrypt(token_in_db.hashed_token) != refresh_token:
             raise SuperAuthException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Invalid token. Checked with encryption.",
+                detail=f"Invalid token.",
             )
     except SQLAlchemyError:
         raise validate_exception
