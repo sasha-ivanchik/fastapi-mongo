@@ -124,7 +124,7 @@ async def get_todo_by_title(
     return prep_api_response(
         response_status=ResponseStatus.success.value,
         message=todo_by_name_message,
-        response_data=todo,
+        response_data=[todo],
         user=user,
     )
 

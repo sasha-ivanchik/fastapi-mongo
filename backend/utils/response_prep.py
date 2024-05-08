@@ -1,6 +1,7 @@
 import datetime
-from typing import Union, Optional, Type
+from typing import Type, Any
 
+from starlette import status
 from starlette.responses import JSONResponse
 from fastapi import status as fastapi_status
 from pydantic import ValidationError
@@ -13,6 +14,7 @@ from core.models import (
     ResponseStatus,
     TokenInfo,
 )
+from utils.exceptions import SuperApiException
 
 
 def get_model_for_data(data: dict) -> Type[TokenInfo | User | Todo]:
@@ -32,7 +34,7 @@ def get_model_for_data(data: dict) -> Type[TokenInfo | User | Todo]:
 def prep_api_response(
         response_status: ResponseStatus,
         message: str,
-        response_data: list[Todo] | TokenInfo | User | None,
+        response_data: Any,
         user: User | None,
         code: int = fastapi_status.HTTP_200_OK,
         cached: bool = False,
@@ -43,9 +45,14 @@ def prep_api_response(
         if model in (TokenInfo, User):
             result = model.model_validate(response_data)
         else:
-            result = [model.model_validate(element) for element in response_data]
-            result = get_datetime_from_epoch(result)
-
+            try:
+                result = [Todo.model_validate(element) for element in response_data]
+                result = get_datetime_from_epoch(result)
+            except Exception:
+                raise SuperApiException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Bad request. Check your data and Retry.",
+                )
     else:
         result = None
     actual_data = ApiResponse(
@@ -68,5 +75,5 @@ def convert_epoch_to_datetime(todo: TodoOut) -> TodoOut:
     return todo
 
 
-def get_datetime_from_epoch(data:list[TodoOut]):
+def get_datetime_from_epoch(data: list[TodoOut]):
     return [convert_epoch_to_datetime(todo) for todo in data]
