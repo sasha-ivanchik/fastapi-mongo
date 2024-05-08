@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from enum import Enum
 from typing import Union, Any
 from datetime import datetime
 
@@ -62,13 +64,27 @@ class User(BaseModel):
     role: str
 
 
-class ApiResponse(BaseModel):
-    result: Union[list[TodoOut], TodoOut]
-    cached: bool = False
-    user: User
-
+# ===================== comon response ==========================
 
 class TokenInfo(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str
+
+
+@dataclass
+class ResponseStatus(str, Enum):
+    success = "success"
+    error = "error"
+
+
+class ApiResponse(BaseModel):
+    status: ResponseStatus | str
+    message: str
+    data: TokenInfo | list[TodoOut] | User | None
+    code: int = 200
+    cached: bool = False
+    user: User | None
+
+    class Config:
+        from_attributes = True

@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware import Middleware
 
 from core.api import router as todo_router
+from exceptions_handling import registered_exception_handlers
 
 origins = [
     "http://localhost:5173",
@@ -20,7 +21,10 @@ middleware = [
     )
 ]
 
-app = FastAPI(middleware=middleware)
+app = FastAPI(
+    middleware=middleware,
+    exception_handlers=registered_exception_handlers,
+)
 app.include_router(todo_router)
 
 if __name__ == "__main__":

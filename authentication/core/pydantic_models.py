@@ -12,7 +12,7 @@ class TunedModel(BaseModel):
         from_attributes = True
 
 
-class Role(Enum):
+class Role(str, Enum):
     admin = "admin"
     user = "user"
     god = "god"
@@ -50,13 +50,9 @@ class TokenInfo(BaseModel):
 
 
 # ===================== comon response ==========================
-@dataclass
-class ResponseStatus(Enum):
+class ResponseStatus(str, Enum):
     success = "success"
     error = "error"
-
-    def __repr__(self):
-        return self.value
 
 
 class AuthResponse(TunedModel):

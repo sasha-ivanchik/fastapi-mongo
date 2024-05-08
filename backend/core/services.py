@@ -1,4 +1,3 @@
-import json
 import time
 
 from fastapi import status, Request, Header
@@ -10,7 +9,7 @@ from .models import (
     TodoCreate,
     TokenInfo,
     User,
-    TodoUpdate,
+    TodoUpdate, ResponseStatus,
 )
 from config import settings
 from .repository import Repository, MongoRepository
@@ -153,12 +152,12 @@ class AuthUserService:
                 data=data,
             )
             response = response.json()
-        if not response.get("access_token"):
+        if response.get("status") != ResponseStatus.success:
             raise SuperApiException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Wrong username or password",
+                status_code=int(response.get('code')),
+                detail=response.get('message'),
             )
-        return response
+        return response.get("data")
 
     @staticmethod
     async def signup_user(
@@ -184,13 +183,12 @@ class AuthUserService:
                 data=data,
             )
             response = response.json()
-            if not response.get("access_token"):
+            if response.get("status") != ResponseStatus.success:
                 raise SuperApiException(
-                    status_code=status.HTTP_418_IM_A_TEAPOT,
-                    detail=f"{response}",
-                    # detail="Check your data and retry.",
+                    status_code=int(response.get('code')),
+                    detail=response.get('message'),
                 )
-        return response
+        return response.get('data')
 
     @staticmethod
     async def check_access_token(request: Request, token: str = Header(...)) -> User:
@@ -205,12 +203,12 @@ class AuthUserService:
                 headers=headers,
             )
             response = response.json()
-            if not response.get("username"):
+            if response.get("status") != ResponseStatus.success:
                 raise SuperApiException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Invalid token",
+                    status_code=int(response.get('code')),
+                    detail=response.get('message'),
                 )
-        return User(**response)
+        return User(**response.get('data'))
 
     @staticmethod
     async def refresh_tokens(request: Request, refresh_token: str = Header(...)) -> TokenInfo:
@@ -225,9 +223,9 @@ class AuthUserService:
                 headers=headers,
             )
             response = response.json()
-            if not response.get("access_token"):
+            if response.get("status") != ResponseStatus.success:
                 raise SuperApiException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Invalid token: {response}",
+                    status_code=int(response.get('code')),
+                    detail=response.get('message'),
                 )
-        return response
+        return response.get("data")

@@ -35,7 +35,6 @@ async def log_in_for_access_token(
         username: str = Form(),
         password: str = Form(),
 ) -> JSONResponse:
-
     user = await UsersService.get_user_by_creds(
         uow=uow,
         username=username,
@@ -43,7 +42,7 @@ async def log_in_for_access_token(
     )
     result = await AuthService.login(uow=uow, user=user)
     return prep_api_response(
-        status=ResponseStatus.success.value,
+        status=ResponseStatus.success,
         message="Client has successfully logged in.",
         data=result,
     )
@@ -54,12 +53,12 @@ async def get_self_info(
         user: user_by_token_dependency,
 ) -> JSONResponse:
     return prep_api_response(
-        status=ResponseStatus.success.value,
+        status=ResponseStatus.success,
         message="Client information provided.",
         data=UserBase(
             username=user.username,
             email=user.email,
-            role=user.role
+            role=user.role.value,
         ),
     )
 

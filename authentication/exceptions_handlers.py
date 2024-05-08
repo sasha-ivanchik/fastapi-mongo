@@ -15,9 +15,9 @@ def request_validation_exception_handler(
     return prep_api_response(
         status=ResponseStatus.error.value,
         code=status_code.HTTP_422_UNPROCESSABLE_ENTITY,
-        message="Validation problem occured.",
+        message="Validation problem with your data. Check your data and retry.",
         data=None,
-        error=f"Unprocessable entity => {request.url.path} => Check your data and retry",
+        error=f"{request.url.path} => Unprocessable entity. Check your data and retry.",
     )
 
 
@@ -26,9 +26,9 @@ def http_exception_handler(request: Request, exc: SuperAuthException) -> JSONRes
     return prep_api_response(
         status=ResponseStatus.error.value,
         code=int(exc.status_code),
-        message="Problem occured.",
+        message=f"Problem occured. {exc.detail}",
         data=None,
-        error=f"Problem => {request.url.path} => {exc.detail}",
+        error=f"{request.url.path} => {exc.detail}",
     )
 
 
@@ -41,7 +41,7 @@ def unhandled_exception_handler(request: Request, exc: Exception) -> JSONRespons
         code=incoming_status_code,
         message="Problem occured.",
         data=None,
-        error=f"Problem => {request.url.path} => {exc}",
+        error=f"{request.url.path} => {type(exc).__name__} : {exc}",
     )
 
 
@@ -52,7 +52,7 @@ def method_not_allowed_handler(request: Request, exc: Exception) -> JSONResponse
         code=status_code.HTTP_405_METHOD_NOT_ALLOWED,
         message="Method not allowed.",
         data=None,
-        error=f"Problem => {request.url.path} => {exc}",
+        error=f"{request.url.path} => {exc}. Check your request",
     )
 
 
@@ -63,7 +63,7 @@ def not_found_exception_handler(request: Request, exc: Exception) -> JSONRespons
         code=status_code.HTTP_404_NOT_FOUND,
         message="No data.",
         data=None,
-        error=f"Problem => {request.url.path} => There is no data",
+        error=f"{request.url.path} => There is no data. Check your request",
     )
 
 
@@ -72,4 +72,5 @@ registered_exception_handlers = {
     SuperAuthException: http_exception_handler,
     405: method_not_allowed_handler,
     404: not_found_exception_handler,
+    Exception: unhandled_exception_handler,
 }
