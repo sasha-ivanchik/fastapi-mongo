@@ -29,11 +29,13 @@ function ListItems () {
             { headers: frontHeaders}
         )
         .then(function (response) {
-            if(response.data.hasOwnProperty("result")){
-                setTodos(response.data.result)
+            if(response.data.status === "success"){
+                setTodos(response.data.data)
+                console.log(response.data)
             }
             else{
                 console.log(response.data)
+                alert(response.data.message)
             }
         })
         .catch(function (error) {

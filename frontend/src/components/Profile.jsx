@@ -41,10 +41,10 @@ export default function Profile () {
                         { headers: frontHeaders}
                     )
                     .then(function (response) {
-                        if(response.data.hasOwnProperty("username")){
-                            const username = response.data.username;
-                            const email = response.data.email;
-                            const role = response.data.role;
+                        if(response.data.status === "success"){
+                            const username = response.data.data.username;
+                            const email = response.data.data.email;
+                            const role = response.data.data.role;
 
                             const result_odj = {
                                 "username": username,
@@ -54,7 +54,7 @@ export default function Profile () {
                             setUserData(result_odj);
                         }
                         else{
-                            alert("INVALID RESPONSE. LOGIN AND RETRY")
+                            alert(response.data.message)
                         }
                     })
                     .catch(function (error) {
@@ -80,21 +80,21 @@ export default function Profile () {
             { headers: frontHeaders }
         )
         .then(function (response) {
-            if(response.data.hasOwnProperty("access_token")){
+            if(response.data.status === "success"){
                 setToken(
-                    {"token": response.data.access_token,
+                    {"token": response.data.data.access_token,
                     "tokenType": ACCESS_TOKEN_FIELD,
                     "isToken": true}
                 )
                 setToken(
-                    {"token": response.data.refresh_token,
+                    {"token": response.data.data.refresh_token,
                     "tokenType": REFRESH_TOKEN_FIELD,
                     "isToken": true},
                 )
                 console.log("successful tokens update")
             }
             else{
-                console.log("INVALID REFRESH TOKEN")
+                console.log(response.data.message)
             }
         })
         .catch(function (error) {

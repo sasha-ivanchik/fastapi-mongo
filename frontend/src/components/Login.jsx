@@ -45,7 +45,7 @@ export default function Login () {
             { headers: frontHeaders}
         )
         .then(function (response) {
-            if(response.data.hasOwnProperty("access_token")){
+            if(response.data.status === "success"){
                 setToken(
                     {"token": response.data.access_token,
                     "tokenType": ACCESS_TOKEN_FIELD,
@@ -60,7 +60,7 @@ export default function Login () {
                 navigate("/profile");
             }
             else{
-                alert("INVALID DATA. RETRY.")
+                alert(response.data.message)
             }
         })
         .catch(function (error) {
@@ -90,21 +90,21 @@ export default function Login () {
                 { headers: frontHeaders }
             )
             .then(function (response) {
-                if(response.data.hasOwnProperty("access_token")){
+                if(response.data.status === "success"){
                     setToken(
-                        {"token": response.data.access_token,
+                        {"token": response.data.data.access_token,
                         "tokenType": ACCESS_TOKEN_FIELD,
                         "isToken": true}
                     )
                     setToken(
-                        {"token": response.data.refresh_token,
+                        {"token": response.data.data.refresh_token,
                         "tokenType": REFRESH_TOKEN_FIELD,
                         "isToken": true},
                     )
                     navigate("/items");
                 }
                 else{
-                    alert("INVALID USERNAME OR PASSWORD")
+                    alert(response.data.message)
                 }
             })
             .catch(function (error) {
