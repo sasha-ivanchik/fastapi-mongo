@@ -47,13 +47,13 @@ export default function Login () {
         .then(function (response) {
             if(response.data.status === "success"){
                 setToken(
-                    {"token": response.data.access_token,
+                    {"token": response.data.data.access_token,
                     "tokenType": ACCESS_TOKEN_FIELD,
                     "isToken": true}
                 );
 
                 setToken(
-                    {"token": response.data.refresh_token,
+                    {"token": response.data.data.refresh_token,
                     "tokenType": REFRESH_TOKEN_FIELD,
                     "isToken": true},
                 );

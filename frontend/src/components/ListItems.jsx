@@ -136,7 +136,7 @@ function ListItems () {
                     >
                         + Create TODO
                     </Button>
-                    <PopupCreateForm
+                    <ModalCreateForm
                         show={modalShow}
                         onHide={() => setModalShow(false)}
                         onCreate={ handleCreateItem }

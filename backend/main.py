@@ -7,8 +7,9 @@ from core.api import router as todo_router
 from exceptions_handling import registered_exception_handlers
 
 origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173"
+    "http://localhost",
+    "http://localhost:3000",
+    # "http://127.0.0.1",
 ]
 
 middleware = [
@@ -22,7 +23,7 @@ middleware = [
 ]
 
 app = FastAPI(
-    middleware=middleware,
+    # middleware=middleware,
     exception_handlers=registered_exception_handlers,
 )
 app.include_router(todo_router)

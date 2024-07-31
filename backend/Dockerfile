@@ -5,9 +5,6 @@ FROM python:3.10-alpine as builder
 
 WORKDIR /src
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
 COPY ./requirements.txt /src/
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /src/wheels -r requirements.txt
 
@@ -16,6 +13,9 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /src/wheels -r requirements.t
 # ====================================================================
 FROM python:3.10-slim-bullseye
 WORKDIR /src
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
 # Switch to ROOT to install curl for health check
 USER root
